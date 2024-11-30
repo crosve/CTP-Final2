@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../../Downloads/real2"
+		},
+		{
+			"path": "../../Downloads/fake2"
+		}
+	],
+	"settings": {}
+}
