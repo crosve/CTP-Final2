@@ -14,10 +14,13 @@ model.compile(optimizer='adam',
 
 # Image processing function for Streamlit using TensorFlow
 def process_image_for_inference(image, img_size=(32, 32)):
-    img = tf.keras.preprocessing.image.load_img(image, target_size=img_size)
+
+    img = tf.keras.preprocessing.image.load_img(image, target_size=(32, 32))
     img_array = tf.keras.preprocessing.image.img_to_array(img)
-    img_array = img_array / 255.0
-    return img_array.reshape(1, 32,32, 3)
+    img_array = img_array / 255.0  # Normalize the pixel values
+    img_array = img_array.reshape(1, 32, 32, 3)  # Add batch dimension
+    return img_array
+
 
 
 # Streamlit UI for fake image detection
@@ -43,6 +46,7 @@ if uploaded_image is not None:
     
     # Display results
     st.write(f"Prediction: {label}")
+    st.write(f"Value: {prediction}")
 else:
     st.write("Please upload an image to get started.")
    

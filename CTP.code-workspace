@@ -1,12 +1,15 @@
 {
 	"folders": [
 		{
+			"name": "CTP",
 			"path": "."
 		},
 		{
+			"name": "real2",
 			"path": "../../Downloads/real2"
 		},
 		{
+			"name": "fake2",
 			"path": "../../Downloads/fake2"
 		}
 	],
