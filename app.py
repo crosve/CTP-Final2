@@ -22,6 +22,9 @@ if "start_game" not in st.session_state:
 if "correct_ans" not in st.session_state:
     st.session_state.correct_ans = False
 
+if "round" not in st.session_state:
+    st.session_state.round = 1
+
 # Load the model (assuming you have the model saved as nn.h5)
 model = tf.keras.models.load_model("nn.h5")
 
@@ -29,7 +32,9 @@ model = tf.keras.models.load_model("nn.h5")
 model.compile(optimizer='adam', 
               loss='binary_crossentropy', 
               metrics=['accuracy'])
-
+#I was thinking of adding 3 levels to the guessing game, cats, dogs and birds
+#Then in the end the user would get a total score or something 
+#Do I stop the stream?
 # Image processing function for Streamlit using TensorFlow
 def process_image_for_inference(image, img_size=(32, 32)):
 
@@ -54,7 +59,7 @@ def aiImageDetector():
 
     if uploaded_image is not None:
         # Display the uploaded image
-        st.image(uploaded_image, caption="Uploaded Image", use_column_width=True)
+        st.image(uploaded_image, caption="Uploaded Image", use_container_width=True)
         
         # Preprocess the image
         img_processed = process_image_for_inference(uploaded_image, img_size=(32, 32))
@@ -139,7 +144,11 @@ def fetchRealImages(folder_path="./guess/real") -> list:
             #     print(f"Error opening {img_path}: {e}")
     return images
 
-
+def homePage():
+    # Function to display readme contents which is our homepage
+    with open("README.md", "r", encoding="utf-8") as f:
+        readme_content = f.read()
+    st.markdown(readme_content, unsafe_allow_html=True)
 
 
 def generateAI():
@@ -200,59 +209,7 @@ def generateAI():
                 
 
 
-
-    
-
-makeFiles()
-# Home page with read.me feature
-st.title("Home")
-st.session_state.correct_ans = False
-
-# Sidebar to access different tabs
-st_sideBar = st.sidebar.title("Sidebar")
-page = st.sidebar.radio("Tabs", ["Generate AI Image", "AI Image detector", "Guessing game"])
-
-if page=="AI Image detector":
-    st.subheader("Fake Image Detection")
-    aiImageDetector()
-
-if page=="Generate AI Image":
-    st.subheader("Generate AI Image")
-    generateAI()
-
-if page=="Guessing game":
-    st.subheader("Try your best to guess which image is real")
-    st.write("Guessing game")
-
-    start = st.button("Start Game")
-    correct_ans = False
-
-
-    #starting from here
-    #also make a session state variable
-    if start or st.session_state.start_game:
-        # if correct_ans or st.session_state.correct_ans:
-        #     st.write("Correct")
-        #     st.balloons()
-        # else:
-        #             # st.write("Wrong")
-        #     st.write("Try again")
-
-
-        st.session_state.start_game = True
-
-        #get the fake images 
-        # fake_image = fakeImageGenerator()
-        # if fake_image is not None:
-        #     st.write("Fake image generator failed")
-
-
-        #show fake image
-        # st.image(fake_image, caption="Fake Image", use_column_width=True)
-
-        #note images are in a list of directory name 
-
-        # fakeImageGenerator()
+def catRound(start):
         real_images_arr = fetchRealImages()
 
         if len(real_images_arr) == 0:
@@ -311,4 +268,217 @@ if page=="Guessing game":
 
 
 
-        #get the real images
+
+    
+
+        
+
+
+            
+
+        
+
+
+def fetchDogImages() -> list:
+    """Opens and reads images from a specified folder."""
+    images = []
+    for filename in os.listdir("./guess/dog"):
+        if filename.endswith((".jpg", ".jpeg", ".png", ".bmp", ".webp")):
+            img_path = os.path.join("./guess/dog", filename)
+            images.append(img_path)
+           
+    return images
+
+def dogRound(start):
+   
+
+
+        # Fetch images for this round
+        dog_images = fetchDogImages()
+
+        print("dog images: ",dog_images)
+        
+
+        
+        # Display images for the user to choose from
+        img = image_select(
+            label="Select a dog",
+            images=[
+                Image.open(dog_images[0]).convert('RGB'),
+                Image.open(dog_images[1]).convert('RGB'),
+                Image.open(dog_images[2]).convert('RGB'),
+                Image.open(dog_images[3]).convert('RGB'),
+            ],
+            captions=["A dog", "dog 2", "dog 3", "dog 4"],
+        )
+
+        st.image(img, caption="Selected Image", use_container_width=True)
+
+        # Save the selected image temporarily
+        img.save("./guess/dog/temp/temp.jpg")
+
+        print("saved images")
+
+        # Preprocess the image for model prediction
+        img_processed = process_image_for_inference("./guess/dog/temp/temp.jpg", img_size=(32, 32))
+
+        # Get the model prediction
+        prediction = model.predict(img_processed)
+        st.write(f"Prediction: {prediction}")
+
+        # Map to human-readable format
+        label = "Real" if prediction > 0.4 else "Fake"
+
+        # Check if the user's choice was correct
+        correct_ans = False
+        if label == "Real":
+            correct_ans = True
+            st.session_state.correct_ans = True
+            st.balloons()  # Celebrate the correct answer
+
+        # Display the result of the round
+        st.write(f"Your answer was {'correct' if correct_ans else 'incorrect'}.")
+        
+        # Show score
+
+        # Move to next round if desired
+        # if st.button("Next Round"):
+        #     st.session_state.round += 1  # Increment round
+        #     st.experimental_rerun()  #
+    
+
+makeFiles()
+# Home page with read.me feature
+st.session_state.correct_ans = False
+
+# Sidebar to access different tabs
+st_sideBar = st.sidebar.title("Sidebar")
+page = st.sidebar.radio("Tabs", ["Homepage" ,"Generate AI Image", "AI Image detector", "Guessing game"])
+if page=="Homepage":
+    homePage()
+
+if page=="AI Image detector":
+    st.subheader("Fake Image Detection")
+    aiImageDetector()
+
+if page=="Generate AI Image":
+    st.subheader("Generate AI Image")
+    generateAI()
+
+if page=="Guessing game":
+    st.subheader("Try your best to guess which image is real")
+    st.write("Guessing game")
+
+    
+    correct_ans = False
+
+    category = st.radio("Choose a category:", ("Cats", "Dogs"))
+
+    start = st.button("Start Game")
+
+
+    
+    if start or st.session_state.start_game:
+        
+
+
+        st.session_state.start_game = True
+
+        if category == "Cats":
+            catRound(start)
+
+        if category == "Dogs":
+            st.write("Dogs")
+            dogRound(start)
+
+        #get the fake images 
+        # fake_image = fakeImageGenerator()
+        # if fake_image is not None:
+        #     st.write("Fake image generator failed")
+
+
+        #show fake image
+        # st.image(fake_image, caption="Fake Image", use_column_width=True)
+
+        #note images are in a list of directory name 
+
+        # fakeImageGenerator()
+        # real_images_arr = fetchRealImages()
+
+        # if len(real_images_arr) == 0:
+        #     st.write("Real image fetch failed")
+
+        
+
+        # print("real images: ",real_images_arr)
+
+            
+
+        
+
+
+
+        # img = image_select(
+        #     label="Select a cat",
+        #     images=[
+        #         # fake_image,
+        #         Image.open(real_images_arr[0]).convert('RGB'),
+        #         Image.open(real_images_arr[1]).convert('RGB'),
+        #         Image.open(real_images_arr[2]).convert('RGB'),
+        #         Image.open("./guess/fake/windowcat.png").convert('RGB'),
+             
+        #     ],
+        #     captions=["A cat", "cat 2", "cat3", "cat4"],
+        # )
+
+        # st.image(img, caption="Selected Image", use_container_width=True)
+
+        # #save image temporarily 
+        # img.save("./guess/temp/temp.jpg")
+
+        # #predict if image is real or fake
+        # # Preprocess the image
+        # img_processed = process_image_for_inference("./guess/temp/temp.jpg", img_size=(32, 32))
+
+        # # Get the model prediction
+        # prediction = model.predict(img_processed)
+        # st.write(f"Prediction: {prediction}")
+
+        # # Map to human-readable format
+        # label = "Real" if prediction > 0.4 else "Fake"
+
+
+        # if label == "Real":
+        #     correct_ans = True
+        #     st.session_state.correct_ans = True
+        #     st.balloons()
+
+        # else:
+        #     correct_ans = False
+
+
+
+
+
+
+
+    
+
+        
+
+
+            
+
+        
+
+
+
+ 
+
+# if __name__ == "__main__":
+#     main()
+
+
+
+
+
