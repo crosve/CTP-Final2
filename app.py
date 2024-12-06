@@ -162,6 +162,7 @@ def generateAI():
 
                 if test_button:
                     #save the image 
+                    #let me use it here
                     generatedImg.save("./guess/temp/temp.png")
 
 
@@ -182,10 +183,20 @@ def generateAI():
                     else:
                         st.write("Fake Image!")
 
+                    #I should of made it a function 
+                    #yeah
+
                 if download_button:
-                    generatedImg.save(f"guess/temp/generated_image{prompt}.png")
-                    st.write("Image saved successfully")
-                    st.balloons()
+                    #wait how?
+                    #oh wait this was just if the user wants to downlao the image
+
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
+                        tmp_file_path = tmp_file.name
+                        generatedImg.save(tmp_file_path)
+                    predict(tmp_file_path)
+                    # generatedImg.save(f"guess/temp/generated_image{prompt}.png")
+                    # st.write("Image saved successfully")
+                    # st.balloons()
                 
 
 
@@ -217,7 +228,8 @@ if page=="Guessing game":
     correct_ans = False
 
 
-
+    #starting from here
+    #also make a session state variable
     if start or st.session_state.start_game:
         # if correct_ans or st.session_state.correct_ans:
         #     st.write("Correct")
