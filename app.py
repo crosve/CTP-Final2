@@ -82,8 +82,6 @@ def fakeImageGenerator():
     # Log in to Hugging Face
     hf_token = os.environ.get('PROJECT_CTP')
 
-    prompt = "cat on the window sill"
-
     if hf_token:
         login(token=hf_token)
     else:
@@ -119,18 +117,22 @@ def fakeImageGenerator():
     # Display the image using Streamlit
     st.image(image, caption="Generated Image", use_column_width=True)
     
-    # pipe = DiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-3.5-medium")
 
-    # prompt = "A cat sitting on a window sill"
-    # image = pipe(prompt).images[0]
-    # image.save("./guess/fake/window_cat.png")
-    
-    # # Get the OS path to the image
-    # image_path = "./guess/fake/window_cat.png"
-    # return image_path
+def fetchRealCatImages(folder_path="./guess/cat/real") -> list:
+    """Opens and reads images from a specified folder."""
+    images = []
+    for filename in os.listdir(folder_path):
+        if filename.endswith((".jpg", ".jpeg", ".png", ".bmp", ".webp")):
+            img_path = os.path.join(folder_path, filename)
+            images.append(img_path)
+            # try:
+            #     img = Image.open(img_path)
+            #     images.append(img)
+            # except Exception as e:
+            #     print(f"Error opening {img_path}: {e}")
+    return images
 
-
-def fetchRealImages(folder_path="./guess/real") -> list:
+def fetchRealDogImages(folder_path="./guess/dog/real") -> list:
     """Opens and reads images from a specified folder."""
     images = []
     for filename in os.listdir(folder_path):
@@ -208,42 +210,79 @@ def generateAI():
                     # st.balloons()
                 
 
+def fetchFakeCatImages(folder_path="./guess/cat/fake") -> list:
+    """Opens and reads images from a specified folder."""
+    images = []
+    for filename in os.listdir(folder_path):
+        if filename.endswith((".jpg", ".jpeg", ".png", ".bmp", ".webp")):
+            img_path = os.path.join(folder_path, filename)
+            images.append(img_path)
+       
+    return images
 
-def catRound(start):
-        real_images_arr = fetchRealImages()
+def fetchFakeDogImages(folder_path="./guess/dog/fake") -> list:
+    """Opens and reads images from a specified folder."""
+    images = []
+    for filename in os.listdir(folder_path):
+        if filename.endswith((".jpg", ".jpeg", ".png", ".bmp", ".webp")):
+            img_path = os.path.join(folder_path, filename)
+            images.append(img_path)
+       
+    return images
 
-        if len(real_images_arr) == 0:
-            st.write("Real image fetch failed")
+def catRound(round, round_points, fake_images):
+    # Fetch images for this round
+    print("fake images: ", fake_images)
+    real_images_arr = fetchRealCatImages()
 
-        
+    if len(real_images_arr) == 0:
+        st.write("Real image fetch failed")
+        return round_points
 
-        print("real images: ",real_images_arr)
+    # Create a list of images for the current round
+    if round == 0:
+        images = [
+            Image.open("./guess/fake/windowcat.png").convert('RGB'),
+            Image.open(real_images_arr[0]).convert('RGB'),
+            Image.open(real_images_arr[1]).convert('RGB'),
+            Image.open(real_images_arr[2]).convert('RGB')
+        ]
+    elif round == 1:
+        images = [
+            Image.open(fake_images[1]).convert('RGB'),
+            Image.open("./guess/real/gato.jpg").convert('RGB'),
+            Image.open(fake_images[0]).convert('RGB'),
+            Image.open("./guess/real/gato.jpg").convert('RGB')
+        ]
+    elif round == 2:
+        images = [
+            Image.open(fake_images[4]).convert('RGB'),
+            Image.open(fake_images[3]).convert('RGB'),
+            Image.open("./guess/real/gato.jpg").convert('RGB'),
+            Image.open("./guess/real/gato.jpg").convert('RGB')
+        ]
+    else:
+        st.write("Invalid round")
+        return round_points
 
+    # Display images and buttons
+    cols = st.columns(4)
+    selected_image = None
+
+    for i, (col, img) in enumerate(zip(cols, images)):
+        with col:
+            # Display the image first
+            st.image(img, caption=f"Cat {i+1}", use_container_width=True)
             
+            # Then add a selection button
+            if st.button(f"Select Cat {i+1}", key=f"cat_select_{round}_{i}"):
+                selected_image = img
 
-        
+    # Rest of the code remains the same as in the previous example
+    if selected_image is not None:
+        # Save the selected image temporarily
+        selected_image.save("./guess/temp/temp.jpg")
 
-
-
-        img = image_select(
-            label="Select a cat",
-            images=[
-                # fake_image,
-                Image.open(real_images_arr[0]).convert('RGB'),
-                Image.open(real_images_arr[1]).convert('RGB'),
-                Image.open(real_images_arr[2]).convert('RGB'),
-                Image.open("./guess/fake/windowcat.png").convert('RGB'),
-             
-            ],
-            captions=["A cat", "cat 2", "cat3", "cat4"],
-        )
-
-        st.image(img, caption="Selected Image", use_container_width=True)
-
-        #save image temporarily 
-        img.save("./guess/temp/temp.jpg")
-
-        #predict if image is real or fake
         # Preprocess the image
         img_processed = process_image_for_inference("./guess/temp/temp.jpg", img_size=(32, 32))
 
@@ -254,29 +293,16 @@ def catRound(start):
         # Map to human-readable format
         label = "Real" if prediction > 0.4 else "Fake"
 
-
+        # Check if the selected image is real
         if label == "Real":
-            correct_ans = True
-            st.session_state.correct_ans = True
+            st.session_state.round_points += 1
             st.balloons()
-
         else:
-            correct_ans = False
+            st.write("Incorrect! This image was detected as fake.")
 
 
+    return round_points
 
-
-
-
-
-    
-
-        
-
-
-            
-
-        
 
 
 def fetchDogImages() -> list:
@@ -289,38 +315,62 @@ def fetchDogImages() -> list:
            
     return images
 
-def dogRound(start):
+def dogRound(round, round_points, fake_images):
    
+    # Fetch images for this round
+    print("fake images: ", fake_images)
+    real_images_arr = fetchRealDogImages()
 
+    if len(real_images_arr) == 0:
+        st.write("Real image fetch failed")
+        return round_points
 
-        # Fetch images for this round
-        dog_images = fetchDogImages()
+    # Create a list of images for the current round
+    if round == 0:
+        images = [
+            Image.open("./guess/dog/fake/chiua.jpeg").convert('RGB'),
+            Image.open("./guess/dog/real/johhnydog.png").convert('RGB'),
+            Image.open("./guess/dog/fake/german.jpeg").convert('RGB'),
+            Image.open("./guess/dog/real/download3.jpg").convert('RGB')
+        ]
+    elif round == 1:
+        images = [
+            Image.open("./guess/dog/fake/chiua.jpeg").convert('RGB'),
+            Image.open("./guess/dog/real/johhnydog.png").convert('RGB'),
+            Image.open("./guess/dog/fake/german.jpeg").convert('RGB'),
+            Image.open("./guess/dog/real/download3.jpg").convert('RGB')
+        ]
+    elif round == 2:
+        images = [
+            Image.open("./guess/dog/fake/chiua.jpeg").convert('RGB'),
+            Image.open("./guess/dog/real/johhnydog.png").convert('RGB'),
+            Image.open("./guess/dog/fake/german.jpeg").convert('RGB'),
+            Image.open("./guess/dog/real/download3.jpg").convert('RGB')
+        ]
+    else:
+        st.write("Invalid round")
+        return round_points
 
-        print("dog images: ",dog_images)
-        
+    # Display images and buttons
+    cols = st.columns(4)
+    selected_image = None
 
-        
-        # Display images for the user to choose from
-        img = image_select(
-            label="Select a dog",
-            images=[
-                Image.open(dog_images[0]).convert('RGB'),
-                Image.open(dog_images[1]).convert('RGB'),
-                Image.open(dog_images[2]).convert('RGB'),
-                Image.open(dog_images[3]).convert('RGB'),
-            ],
-            captions=["A dog", "dog 2", "dog 3", "dog 4"],
-        )
+    for i, (col, img) in enumerate(zip(cols, images)):
+        with col:
+            # Display the image first
+            st.image(img, caption=f"Dog {i+1}", use_container_width=True)
+            
+            # Then add a selection button
+            if st.button(f"Select Dog {i+1}", key=f"dog_select_{round}_{i}"):
+                selected_image = img
 
-        st.image(img, caption="Selected Image", use_container_width=True)
-
+    # Rest of the code remains the same as in the previous example
+    if selected_image is not None:
         # Save the selected image temporarily
-        img.save("./guess/dog/temp/temp.jpg")
+        selected_image.save("./guess/temp/temp.jpg")
 
-        print("saved images")
-
-        # Preprocess the image for model prediction
-        img_processed = process_image_for_inference("./guess/dog/temp/temp.jpg", img_size=(32, 32))
+        # Preprocess the image
+        img_processed = process_image_for_inference("./guess/temp/temp.jpg", img_size=(32, 32))
 
         # Get the model prediction
         prediction = model.predict(img_processed)
@@ -329,31 +379,30 @@ def dogRound(start):
         # Map to human-readable format
         label = "Real" if prediction > 0.4 else "Fake"
 
-        # Check if the user's choice was correct
-        correct_ans = False
+        # Check if the selected image is real
         if label == "Real":
-            correct_ans = True
-            st.session_state.correct_ans = True
-            st.balloons()  # Celebrate the correct answer
+            st.session_state.round_points += 1
+            st.balloons()
+        else:
+            st.write("Incorrect! This image was detected as fake.")
 
-        # Display the result of the round
-        st.write(f"Your answer was {'correct' if correct_ans else 'incorrect'}.")
-        
-        # Show score
 
-        # Move to next round if desired
-        # if st.button("Next Round"):
-        #     st.session_state.round += 1  # Increment round
-        #     st.experimental_rerun()  #
+    return round_points
     
+
+if "round_num" not in st.session_state:
+    st.session_state.round_num = 0
+
+if "round_points" not in st.session_state:
+    st.session_state.round_points = 0
 
 makeFiles()
 # Home page with read.me feature
 st.session_state.correct_ans = False
 
 # Sidebar to access different tabs
-st_sideBar = st.sidebar.title("Sidebar")
-page = st.sidebar.radio("Tabs", ["Homepage" ,"Generate AI Image", "AI Image detector", "Guessing game"])
+# st_sideBar = st.sidebar.title("Sidebar")
+page = st.sidebar.radio("", ["Homepage" ,"Generate AI Image", "AI Image detector", "Guessing game"])
 if page=="Homepage":
     homePage()
 
@@ -373,8 +422,15 @@ if page=="Guessing game":
     correct_ans = False
 
     category = st.radio("Choose a category:", ("Cats", "Dogs"))
+    fake_cat_images = fetchFakeCatImages()
+    fake_dog_images = fetchFakeDogImages()
 
     start = st.button("Start Game")
+    if start:
+        if category == "Cats":
+            catRound(st.session_state.round_num,st.session_state.round_points ,fake_cat_images)
+        if category == "Dogs":
+            dogRound(st.session_state.round_num,st.session_state.round_points ,fake_dog_images)
 
 
     
@@ -385,77 +441,54 @@ if page=="Guessing game":
         st.session_state.start_game = True
 
         if category == "Cats":
-            catRound(start)
+            st.write("Cats")
+
+            while st.session_state.round_num < 3:
+                points = catRound(st.session_state.round_num,st.session_state.round_points ,fake__cat_images)
+                print("round num: ",st.session_state.round_num)
+
+                if st.session_state.round_num < 3:
+                    if not st.button("Next Round", key=st.session_state.round_num):
+                        st.stop()
+                    else:
+                        
+                        st.session_state.round_num += 1
+
+          
+            st.write("Game Over")
+            st.write("Your score is: ",st.session_state.round_points)
+            st.session_state.round_num = 0
+            if st.button("Done"):
+                st.session_state.start_game = False
+                start = False
+                category = None
+                st.stop()
+               
+           
 
         if category == "Dogs":
             st.write("Dogs")
-            dogRound(start)
 
-        #get the fake images 
-        # fake_image = fakeImageGenerator()
-        # if fake_image is not None:
-        #     st.write("Fake image generator failed")
+            while st.session_state.round_num < 3:
+                points = dogRound(st.session_state.round_num,st.session_state.round_points ,fake_dog_images)
+                print("round num: ",st.session_state.round_num)
 
+                if st.session_state.round_num < 3:
+                    if not st.button("Next Round", key=st.session_state.round_num):
+                        st.stop()
+                    else:
+                        
+                        st.session_state.round_num += 1
 
-        #show fake image
-        # st.image(fake_image, caption="Fake Image", use_column_width=True)
-
-        #note images are in a list of directory name 
-
-        # fakeImageGenerator()
-        # real_images_arr = fetchRealImages()
-
-        # if len(real_images_arr) == 0:
-        #     st.write("Real image fetch failed")
-
-        
-
-        # print("real images: ",real_images_arr)
-
-            
-
-        
-
-
-
-        # img = image_select(
-        #     label="Select a cat",
-        #     images=[
-        #         # fake_image,
-        #         Image.open(real_images_arr[0]).convert('RGB'),
-        #         Image.open(real_images_arr[1]).convert('RGB'),
-        #         Image.open(real_images_arr[2]).convert('RGB'),
-        #         Image.open("./guess/fake/windowcat.png").convert('RGB'),
-             
-        #     ],
-        #     captions=["A cat", "cat 2", "cat3", "cat4"],
-        # )
-
-        # st.image(img, caption="Selected Image", use_container_width=True)
-
-        # #save image temporarily 
-        # img.save("./guess/temp/temp.jpg")
-
-        # #predict if image is real or fake
-        # # Preprocess the image
-        # img_processed = process_image_for_inference("./guess/temp/temp.jpg", img_size=(32, 32))
-
-        # # Get the model prediction
-        # prediction = model.predict(img_processed)
-        # st.write(f"Prediction: {prediction}")
-
-        # # Map to human-readable format
-        # label = "Real" if prediction > 0.4 else "Fake"
-
-
-        # if label == "Real":
-        #     correct_ans = True
-        #     st.session_state.correct_ans = True
-        #     st.balloons()
-
-        # else:
-        #     correct_ans = False
-
+          
+            st.write("Game Over")
+            st.write("Your score is: ",st.session_state.round_points)
+            st.session_state.round_num = 0
+            if st.button("Done"):
+                st.session_state.start_game = False
+                start = False
+                category = None
+                st.stop()
 
 
 
