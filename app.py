@@ -3,7 +3,6 @@ import tensorflow as tf
 import numpy as np
 import torch
 import os
-import uuid
 from tensorflow.keras.utils import load_img, img_to_array
 from PIL import Image
 from huggingface_hub import InferenceClient, hf_hub_download, login
