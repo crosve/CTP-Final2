@@ -244,21 +244,21 @@ def catRound(round, round_points, fake_images):
             Image.open("./guess/cat/fake/windowcat.png").convert('RGB'),
             Image.open(real_images_arr[0]).convert('RGB'),
             Image.open(real_images_arr[1]).convert('RGB'),
-            Image.open(real_images_arr[2]).convert('RGB')
+            Image.open(real_images_arr[3]).convert('RGB')
         ]
     elif round == 1:
         images = [
             Image.open(fake_images[1]).convert('RGB'),
             Image.open("./guess/cat/real/gato.jpg").convert('RGB'),
             Image.open(fake_images[0]).convert('RGB'),
-            Image.open("./guess/cat/real/gato.jpg").convert('RGB')
+            Image.open(fake_images[3]).convert('RGB')
         ]
     elif round == 2:
         images = [
-            Image.open(fake_images[4]).convert('RGB'),
-            Image.open(fake_images[3]).convert('RGB'),
-            Image.open("./guess/cat/real/gato.jpg").convert('RGB'),
-            Image.open("./guess/cat/real/gato.jpg").convert('RGB')
+            Image.open(fake_images[6]).convert('RGB'),
+            Image.open(fake_images[7]).convert('RGB'),
+            Image.open("./guess/cat/real/looker.png").convert('RGB'),
+            Image.open(fake_cat_images[5]).convert('RGB')
         ]
     else:
         st.write("Invalid round")
@@ -275,7 +275,7 @@ def catRound(round, round_points, fake_images):
     for i, (col, img) in enumerate(zip(cols, images)):
         with col:
             st.image(img, caption=f"Cat {i+1}", use_container_width=True)
-            if st.button(f"Select Cat {i+1}", key=f"cat_select_{i}"):
+            if st.button(f"Select Cat {i+1}", key = f"catselect{round}_{i}" ):
                 selected_image = img
 
     # Rest of the code remains the same as in the previous example
@@ -399,9 +399,34 @@ makeFiles()
 # Home page with read.me feature
 st.session_state.correct_ans = False
 
+icon_path = "./icon.png"
+
+# st.sidebar.image(icon_path, caption='', use_column_width=False, width=50)  # This helps verify the image is found
+
+
+circular_image_style = f"""
+<style>
+.circular-image {{
+    width: 100px;  /* Adjust the size as needed */
+    height: 100px; /* Adjust the size as needed */
+    border-radius: 50%;  /* Makes the image circular */
+    object-fit: cover;  /* Ensures the image covers the container without distortion */
+}}
+</style>
+"""
+
+# Embed the image in HTML with the custom style
+image_html = f"""
+{circular_image_style}
+<img src="{icon_path}" class="circular-image" alt="Circular Image">
+"""
+
+# Add the HTML to the Streamlit sidebar
+st.sidebar.markdown(image_html, unsafe_allow_html=True)
+
 # Sidebar to access different tabs
 # st_sideBar = st.sidebar.title("Sidebar")
-page = st.sidebar.radio("", ["Homepage" ,"Generate AI Image", "AI Image detector", "Guessing game"])
+page = st.sidebar.radio("", ["Homepage", "Gato ??" ,"Generate AI Image", "AI Image detector"])
 if page=="Homepage":
     homePage()
 
@@ -413,7 +438,7 @@ if page=="Generate AI Image":
     st.subheader("Generate AI Image")
     generateAI()
 
-if page=="Guessing game":
+if page=="Gato ??":
     st.subheader("Try your best to guess which image is real")
     st.write("Guessing game")
 
@@ -434,6 +459,7 @@ if page=="Guessing game":
 
         if category == "Cats":
             st.write("Cats")
+            print("fake cat images: ", fake_cat_images)
 
             while st.session_state.round_num < 3:
                 points = catRound(st.session_state.round_num,st.session_state.round_points ,fake_cat_images)
