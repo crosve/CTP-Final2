@@ -1,4 +1,4 @@
-# AI Detection Streamlit App
+# DogWatch AI
 
 A Python based Streamlit web app to detect AI-generated images
 
